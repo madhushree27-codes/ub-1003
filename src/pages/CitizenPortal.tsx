@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
 import { analyzeIssue } from "@/lib/aiEngine";
-import { ALL_ISSUES } from "@/lib/mockData";
+import { useIssueStore } from "@/lib/issueStore";
 import type { Issue, IssueCategory, AIAnalysis } from "@/lib/types";
 
 const categories: IssueCategory[] = [
@@ -22,16 +22,16 @@ const statusColors: Record<string, string> = {
 const CURRENT_USER = "USR-1";
 
 export default function CitizenPortal() {
+  const { issues, addIssue, updateIssueSatisfaction } = useIssueStore();
   const [tab, setTab] = useState<"report" | "issues" | "dashboard">("dashboard");
   const [category, setCategory] = useState<IssueCategory>("Road Damage");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [aiResult, setAiResult] = useState<AIAnalysis | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [userIssues, setUserIssues] = useState<Issue[]>(
-    () => ALL_ISSUES.filter((_, i) => i < 8).map(iss => ({ ...iss, user_id: CURRENT_USER }))
-  );
   const [ratingIssueId, setRatingIssueId] = useState<string | null>(null);
+
+  const userIssues = useMemo(() => issues.filter(i => i.user_id === CURRENT_USER), [issues]);
 
   const myResolved = userIssues.filter(i => i.status === "Resolved").length;
   const myInProgress = userIssues.filter(i => ["In Progress", "Assigned", "Under Review"].includes(i.status)).length;
@@ -51,7 +51,7 @@ export default function CitizenPortal() {
     };
 
     const newIssue: Issue = {
-      issue_id: `ISS-${2000 + userIssues.length}`,
+      issue_id: `ISS-${2000 + issues.length}`,
       user_id: CURRENT_USER,
       image_url: imageFile ? URL.createObjectURL(imageFile) : "",
       category,
@@ -68,14 +68,12 @@ export default function CitizenPortal() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setUserIssues(prev => [newIssue, ...prev]);
+    addIssue(newIssue);
     setSubmitted(true);
   };
 
   const handleRate = (issueId: string, rating: number) => {
-    setUserIssues(prev => prev.map(i =>
-      i.issue_id === issueId ? { ...i, satisfaction_score: rating } : i
-    ));
+    updateIssueSatisfaction(issueId, rating);
     setRatingIssueId(null);
   };
 

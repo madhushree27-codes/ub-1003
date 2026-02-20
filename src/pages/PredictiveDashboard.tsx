@@ -6,11 +6,12 @@ import {
 import { Brain, TrendingUp, Clock, Lightbulb } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
 import { generateForecast, getDepartmentDelayProbability, getFeatureImportance } from "@/lib/aiEngine";
-import { ALL_ISSUES, DEPARTMENTS } from "@/lib/mockData";
+import { useIssueStore } from "@/lib/issueStore";
 
 const COLORS = ["hsl(210,100%,50%)", "hsl(152,60%,40%)", "hsl(38,92%,50%)", "hsl(0,72%,51%)", "hsl(220,65%,18%)"];
 
 export default function PredictiveDashboard() {
+  const { issues } = useIssueStore();
   const forecast = useMemo(() => generateForecast(30), []);
   const delays = useMemo(() => getDepartmentDelayProbability(), []);
   const featureImp = useMemo(() => getFeatureImportance(), []);
@@ -18,24 +19,29 @@ export default function PredictiveDashboard() {
   const avgPredicted = Math.round(forecast.reduce((s, d) => s + d.predicted, 0) / forecast.length);
   const peakDay = forecast.reduce((max, d) => d.predicted > max.predicted ? d : max, forecast[0]);
 
-  const suggestions = [
-    { dept: "Public Works", suggestion: "Increase crew capacity by 20% in Zone A during monsoon season" },
-    { dept: "Sanitation", suggestion: "Deploy additional waste collection vehicles in high-density areas" },
-    { dept: "Electrical", suggestion: "Pre-emptive maintenance for streetlights older than 5 years" },
-    { dept: "Water Supply", suggestion: "Monitor pipeline pressure in sectors with recurring leakage" },
-  ];
+  const suggestions = useMemo(() => {
+    const catCounts: Record<string, number> = {};
+    issues.forEach(i => { catCounts[i.category] = (catCounts[i.category] || 0) + 1; });
+    const top = Object.entries(catCounts).sort((a, b) => b[1] - a[1]);
+    return [
+      { dept: "Public Works", suggestion: `${catCounts["Road Damage"] || 0} road damage reports — increase crew capacity during monsoon` },
+      { dept: "Sanitation", suggestion: `${catCounts["Garbage Overflow"] || 0} garbage reports — deploy additional collection vehicles` },
+      { dept: "Electrical", suggestion: `${catCounts["Streetlight Failure"] || 0} streetlight reports — schedule pre-emptive maintenance` },
+      { dept: "Water Supply", suggestion: `${catCounts["Water Leakage"] || 0} leakage reports — monitor pipeline pressure in affected sectors` },
+    ];
+  }, [issues]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-foreground">Predictive Analytics</h1>
-        <p className="text-muted-foreground">AI-powered forecasting and resource optimization</p>
+        <p className="text-muted-foreground">AI-powered forecasting based on {issues.length} submitted reports</p>
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Avg Daily Prediction" value={avgPredicted} icon={Brain} variant="primary" subtitle="Issues per day" />
-        <StatsCard title="Peak Day" value={peakDay.date} icon={TrendingUp} subtitle={`${peakDay.predicted} predicted issues`} />
-        <StatsCard title="Highest Delay Risk" value={delays.sort((a, b) => b.probability - a.probability)[0].department.split(" ")[0]} icon={Clock} variant="warning" subtitle={`${delays[0].probability}% delay probability`} />
+        <StatsCard title="Total Reports" value={issues.length} icon={Brain} variant="primary" subtitle="Fed into AI model" />
+        <StatsCard title="Avg Daily Prediction" value={avgPredicted} icon={TrendingUp} subtitle="Issues per day" />
+        <StatsCard title="Peak Day" value={peakDay.date} icon={Clock} variant="warning" subtitle={`${peakDay.predicted} predicted`} />
         <StatsCard title="AI Confidence" value="91%" icon={Brain} variant="success" subtitle="Model accuracy" />
       </div>
 
