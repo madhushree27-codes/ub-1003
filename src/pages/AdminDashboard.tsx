@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
 import {
-  FileText, AlertTriangle, Clock, CheckCircle, ChevronDown, Search, ArrowUpDown
+  FileText, AlertTriangle, Clock, CheckCircle, ChevronDown, Search
 } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
-import { ALL_ISSUES, DEPARTMENTS } from "@/lib/mockData";
-import type { Issue, IssueCategory, IssueStatus, Department } from "@/lib/types";
+import { useIssueStore } from "@/lib/issueStore";
+import type { IssueStatus } from "@/lib/types";
 
 const statusColors: Record<string, string> = {
   Submitted: "bg-info/10 text-info",
@@ -15,7 +15,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
-  const [issues, setIssues] = useState<Issue[]>(ALL_ISSUES);
+  const { issues, updateIssueStatus, bulkUpdateStatus } = useIssueStore();
   const [filterStatus, setFilterStatus] = useState<string>("All");
   const [filterCategory, setFilterCategory] = useState<string>("All");
   const [filterDept, setFilterDept] = useState<string>("All");
@@ -37,16 +37,8 @@ export default function AdminDashboard() {
     });
   }, [issues, filterStatus, filterCategory, filterDept, searchTerm]);
 
-  const handleStatusChange = (issueId: string, newStatus: IssueStatus) => {
-    setIssues(prev => prev.map(i =>
-      i.issue_id === issueId ? { ...i, status: newStatus, updated_at: new Date().toISOString() } : i
-    ));
-  };
-
   const handleBulkStatus = (newStatus: IssueStatus) => {
-    setIssues(prev => prev.map(i =>
-      selectedIssues.has(i.issue_id) ? { ...i, status: newStatus, updated_at: new Date().toISOString() } : i
-    ));
+    bulkUpdateStatus(Array.from(selectedIssues), newStatus);
     setSelectedIssues(new Set());
   };
 
@@ -70,7 +62,7 @@ export default function AdminDashboard() {
         <StatsCard title="Total Reports" value={totalReports} icon={FileText} variant="primary" subtitle="From all citizens" />
         <StatsCard title="Critical" value={critical} icon={AlertTriangle} variant="destructive" subtitle="High + Critical severity" />
         <StatsCard title="In Progress" value={inProgress} icon={Clock} variant="warning" subtitle="Being handled" />
-        <StatsCard title="Resolved" value={resolved} icon={CheckCircle} variant="success" subtitle={`${((resolved / totalReports) * 100).toFixed(0)}% resolution rate`} />
+        <StatsCard title="Resolved" value={resolved} icon={CheckCircle} variant="success" subtitle={`${totalReports > 0 ? ((resolved / totalReports) * 100).toFixed(0) : 0}% resolution rate`} />
       </div>
 
       {/* Filters */}
@@ -135,7 +127,7 @@ export default function AdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {filtered.slice(0, 30).map(issue => (
+            {filtered.map(issue => (
               <tr key={issue.issue_id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="p-3">
                   <input type="checkbox"
@@ -162,7 +154,7 @@ export default function AdminDashboard() {
                 <td className="p-3">
                   <select
                     value={issue.status}
-                    onChange={e => handleStatusChange(issue.issue_id, e.target.value as IssueStatus)}
+                    onChange={e => updateIssueStatus(issue.issue_id, e.target.value as IssueStatus)}
                     className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   >
                     <option value="Submitted">Submitted</option>
@@ -176,10 +168,8 @@ export default function AdminDashboard() {
             ))}
           </tbody>
         </table>
-        {filtered.length > 30 && (
-          <div className="border-t border-border p-3 text-center text-xs text-muted-foreground">
-            Showing 30 of {filtered.length} issues
-          </div>
+        {filtered.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">No reports yet. Submit one from the Citizen Portal!</div>
         )}
       </div>
     </div>
