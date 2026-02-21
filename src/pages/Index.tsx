@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Brain, Eye, Copy, Clock, TrendingUp, BarChart3,
+  Brain, Eye, Clock, TrendingUp, BarChart3,
   ArrowRight, Shield, ChevronRight, Globe
 } from "lucide-react";
 import AnimatedCounter from "@/components/AnimatedCounter";
@@ -9,14 +9,14 @@ import heroImage from "@/assets/hero-city.jpg";
 const features = [
   { icon: Brain, title: "AI Image Classification", desc: "Automated categorization of civic issues using intelligent analysis" },
   { icon: TrendingUp, title: "Urgency Prediction", desc: "Priority scoring engine that ensures critical issues are addressed first" },
-  { icon: Copy, title: "Duplicate Detection", desc: "Smart clustering to prevent redundant reports and save resources" },
+  { icon: Shield, title: "Smart Routing", desc: "Automatic assignment of issues to the right department for faster resolution" },
   { icon: Clock, title: "SLA Monitoring", desc: "Real-time tracking of service level agreements across departments" },
   { icon: Eye, title: "Zone Risk Forecasting", desc: "Predictive models for identifying high-risk areas before issues arise" },
   { icon: BarChart3, title: "Governance Analytics", desc: "Data-driven insights for policy decisions and resource allocation" },
 ];
 
 const metrics = [
-  { value: 42, suffix: "%", label: "Duplicate Reduction" },
+  { value: 96, suffix: "%", label: "AI Accuracy" },
   { value: 3.2, suffix: " hrs", label: "Avg Resolution Time" },
   { value: 94, suffix: "%", label: "SLA Compliance" },
   { value: 87, suffix: "%", label: "Citizen Satisfaction" },

@@ -77,7 +77,7 @@ export default function AdminDashboard() {
           />
         </div>
         {[
-          { label: "Status", value: filterStatus, setter: setFilterStatus, options: ["All", "Submitted", "Under Review", "Assigned", "In Progress", "Resolved"] },
+          { label: "Status", value: filterStatus, setter: setFilterStatus, options: ["All", "Submitted", "In Progress", "Resolved"] },
           { label: "Category", value: filterCategory, setter: setFilterCategory, options: ["All", "Road Damage", "Garbage Overflow", "Streetlight Failure", "Water Leakage", "Public Safety Hazard"] },
           { label: "Department", value: filterDept, setter: setFilterDept, options: ["All", "Public Works", "Sanitation", "Electrical", "Water Supply", "Public Safety"] },
         ].map(f => (
@@ -158,8 +158,6 @@ export default function AdminDashboard() {
                     className="rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   >
                     <option value="Submitted">Submitted</option>
-                    <option value="Under Review">Under Review</option>
-                    <option value="Assigned">Assigned</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Resolved">Resolved</option>
                   </select>
