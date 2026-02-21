@@ -1,23 +1,21 @@
 import { useMemo } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell
 } from "recharts";
 import { Brain, TrendingUp, Clock, Lightbulb } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
-import { generateForecast, getDepartmentDelayProbability, getFeatureImportance } from "@/lib/aiEngine";
+import { getDepartmentDelayProbability, getFeatureImportance } from "@/lib/aiEngine";
 import { useIssueStore } from "@/lib/issueStore";
 
 const COLORS = ["hsl(210,100%,50%)", "hsl(152,60%,40%)", "hsl(38,92%,50%)", "hsl(0,72%,51%)", "hsl(220,65%,18%)"];
 
 export default function PredictiveDashboard() {
   const { issues } = useIssueStore();
-  const forecast = useMemo(() => generateForecast(30), []);
   const delays = useMemo(() => getDepartmentDelayProbability(), []);
   const featureImp = useMemo(() => getFeatureImportance(), []);
 
-  const avgPredicted = Math.round(forecast.reduce((s, d) => s + d.predicted, 0) / forecast.length);
-  const peakDay = forecast.reduce((max, d) => d.predicted > max.predicted ? d : max, forecast[0]);
+  const avgDaily = issues.length > 0 ? Math.round(issues.length / 7) || 1 : 0;
 
   const suggestions = useMemo(() => {
     const catCounts: Record<string, number> = {};
@@ -40,28 +38,12 @@ export default function PredictiveDashboard() {
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard title="Total Reports" value={issues.length} icon={Brain} variant="primary" subtitle="Fed into AI model" />
-        <StatsCard title="Avg Daily Prediction" value={avgPredicted} icon={TrendingUp} subtitle="Issues per day" />
-        <StatsCard title="Peak Day" value={peakDay.date} icon={Clock} variant="warning" subtitle={`${peakDay.predicted} predicted`} />
+        <StatsCard title="Avg Daily Reports" value={avgDaily} icon={TrendingUp} subtitle="Issues per day" />
+        <StatsCard title="Active Issues" value={issues.filter(i => i.status !== "Resolved").length} icon={Clock} variant="warning" subtitle="Unresolved" />
         <StatsCard title="AI Confidence" value="91%" icon={Brain} variant="success" subtitle="Model accuracy" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* 30-day Forecast */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-card lg:col-span-2">
-          <h3 className="mb-4 font-display text-lg font-semibold text-foreground">30-Day Issue Forecast</h3>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={forecast}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,88%)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(220,10%,46%)" }} interval={2} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-              <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(220,15%,88%)", fontSize: "12px" }} />
-              <Legend />
-              <Line type="monotone" dataKey="predicted" stroke="hsl(210,100%,50%)" strokeWidth={2} dot={false} name="Predicted" />
-              <Line type="monotone" dataKey="actual" stroke="hsl(152,60%,40%)" strokeWidth={2} dot={false} name="Actual" connectNulls={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
         {/* Feature Importance */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-card">
           <h3 className="mb-4 font-display text-lg font-semibold text-foreground">Feature Importance (AI Model)</h3>
